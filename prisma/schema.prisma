@@ -1,0 +1,858 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["clientExtensions"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Users ─────────────────────────────────────────────────
+
+model User {
+  id           String  @id @default(uuid()) @db.Uuid
+  email        String  @unique @db.VarChar(255)
+  passwordHash String  @map("password_hash") @db.VarChar(255)
+  displayName  String  @map("display_name") @db.VarChar(100)
+  avatarUrl    String? @map("avatar_url") @db.VarChar(2048)
+  role         String  @default("blogger") @db.VarChar(20)
+
+  emailVerifiedAt  DateTime? @map("email_verified_at") @db.Timestamptz
+  emailVerifyToken String?   @unique @map("email_verify_token") @db.VarChar(255)
+
+  passwordChangedAt DateTime? @map("password_changed_at") @db.Timestamptz
+  passwordHistory   Json?     @map("password_history")
+
+  language        String  @default("en") @db.VarChar(10)
+  timezone        String  @default("UTC") @db.VarChar(50)
+  badgeVisibility Boolean @default(true) @map("badge_visibility")
+  founderBadge    String? @map("founder_badge") @db.VarChar(20)
+
+  isActive    Boolean   @default(true) @map("is_active")
+  lastLoginAt DateTime? @map("last_login_at") @db.Timestamptz
+
+  // Standard
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz
+
+  // Relations
+  sessions           Session[]
+  passwordResets     PasswordReset[]
+  blogs              Blog[]
+  blogVerifications  BlogVerification[]
+  founderSeat        FounderSeat?
+  subscriptions      UserSubscription[]
+  payments           Payment[]
+  wallet             Wallet?
+  userBadges         UserBadge[]
+  notifications      Notification[]
+  supportTickets     SupportTicket[]
+  supportReplies     SupportReply[]
+  promotionCampaigns PromotionCampaign[]
+
+  @@index([email])
+  @@index([role])
+  @@index([deletedAt])
+  @@map("users")
+}
+
+// ─── Sessions ──────────────────────────────────────────────
+
+model Session {
+  id               String    @id @default(uuid()) @db.Uuid
+  userId           String    @map("user_id") @db.Uuid
+  refreshTokenHash String    @unique @map("refresh_token_hash") @db.VarChar(255)
+  deviceInfo       String?   @map("device_info") @db.Text
+  ipAddress        String?   @map("ip_address") @db.VarChar(45)
+  userAgent        String?   @map("user_agent") @db.Text
+  lastActivityAt   DateTime? @map("last_activity_at") @db.Timestamptz
+  expiresAt        DateTime  @map("expires_at") @db.Timestamptz
+  revokedAt        DateTime? @map("revoked_at") @db.Timestamptz
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt        DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([refreshTokenHash])
+  @@map("sessions")
+}
+
+// ─── Password Resets ───────────────────────────────────────
+
+model PasswordReset {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  token     String    @unique @db.VarChar(255)
+  expiresAt DateTime  @map("expires_at") @db.Timestamptz
+  usedAt    DateTime? @map("used_at") @db.Timestamptz
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([userId])
+  @@map("password_resets")
+}
+
+// ─── Brute Force ────────────────────────────────────────────
+
+model BruteForceAttempt {
+  id             String    @id @default(uuid()) @db.Uuid
+  identifier     String    @db.VarChar(255)
+  attempts       Int       @default(1)
+  firstAttemptAt DateTime  @default(now()) @map("first_attempt_at") @db.Timestamptz
+  blockedUntil   DateTime? @map("blocked_until") @db.Timestamptz
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@index([identifier])
+  @@index([blockedUntil])
+  @@map("brute_force_attempts")
+}
+
+// ─── Blogs ─────────────────────────────────────────────────
+
+model Blog {
+  id              String    @id @default(uuid()) @db.Uuid
+  userId          String    @map("user_id") @db.Uuid
+  name            String    @db.VarChar(255)
+  slug            String    @unique @db.VarChar(255)
+  description     String?   @db.Text
+  url             String    @unique @db.VarChar(2048)
+  faviconUrl      String?   @map("favicon_url") @db.VarChar(2048)
+  primaryLanguage String    @map("primary_language") @db.VarChar(10)
+  status          String    @default("draft") @db.VarChar(20)
+  trustStatus     String    @default("new") @map("trust_status") @db.VarChar(20)
+  verifiedAt      DateTime? @map("verified_at") @db.Timestamptz
+  visibility      String    @default("public") @db.VarChar(20)
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+  deletedAt       DateTime? @map("deleted_at") @db.Timestamptz
+
+  user          User               @relation(fields: [userId], references: [id])
+  verifications BlogVerification[]
+  categories    BlogCategory[]
+  languages     BlogLanguage[]
+  slugHistory   SlugHistory[]
+  feeds         RssFeed[]
+  articles      Article[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([trustStatus])
+  @@index([primaryLanguage])
+  @@index([slug])
+  @@index([deletedAt])
+  @@map("blogs")
+}
+
+model BlogVerification {
+  id     String @id @default(uuid()) @db.Uuid
+  blogId String @map("blog_id") @db.Uuid
+  method String @db.VarChar(30) // ownership: meta_tag, dns_txt, html_file | quality: quality_assessment
+  token  String @db.VarChar(255)
+
+  // Ownership fields
+  expiresAt     DateTime? @map("expires_at") @db.Timestamptz
+  attemptCount  Int       @default(0) @map("attempt_count")
+  lastCheckedAt DateTime? @map("last_checked_at") @db.Timestamptz
+  errorMessage  String?   @map("error_message") @db.Text
+
+  // Quality assessment fields
+  score      Int?      @map("score")
+  strategies Json?     @db.JsonB
+  summary    String?   @db.Text
+  decidedAt  DateTime? @map("decided_at") @db.Timestamptz
+
+  status     String    @default("pending") @db.VarChar(20) // pending, verified, approved, rejected, failed, expired
+  verifiedAt DateTime? @map("verified_at") @db.Timestamptz
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt  DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  blog   Blog    @relation(fields: [blogId], references: [id], onDelete: Cascade)
+  User   User?   @relation(fields: [userId], references: [id])
+  userId String? @db.Uuid
+
+  @@index([blogId])
+  @@index([token])
+  @@index([status])
+  @@index([method])
+  @@map("blog_verifications")
+}
+
+model RssFeed {
+  id                  String    @id @default(uuid()) @db.Uuid
+  blogId              String    @map("blog_id") @db.Uuid
+  url                 String    @db.VarChar(2048)
+  title               String?   @db.VarChar(255)
+  description         String?   @db.Text
+  siteUrl             String?   @map("site_url") @db.VarChar(2048)
+  feedType            String?   @map("feed_type") @db.VarChar(10)
+  language            String?   @db.VarChar(10)
+  icon                String?   @db.VarChar(2048)
+  status              String    @default("active") @db.VarChar(20)
+  syncFrequency       Int       @default(3600) @map("sync_frequency")
+  lastSyncAt          DateTime? @map("last_sync_at") @db.Timestamptz
+  nextSyncAt          DateTime? @map("next_sync_at") @db.Timestamptz
+  successCount        Int       @default(0) @map("success_count")
+  failureCount        Int       @default(0) @map("failure_count")
+  lastSuccessAt       DateTime? @map("last_success_at") @db.Timestamptz
+  lastFailureAt       DateTime? @map("last_failure_at") @db.Timestamptz
+  averageResponseTime Float?    @map("average_response_time")
+  healthScore         Float     @default(100) @map("health_score")
+  lastError           String?   @map("last_error") @db.Text
+  errorCount          Int       @default(0) @map("error_count")
+  priority            Int       @default(0)
+  createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt           DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+  disabledAt          DateTime? @map("disabled_at") @db.Timestamptz
+  archivedAt          DateTime? @map("archived_at") @db.Timestamptz
+
+  blog Blog @relation(fields: [blogId], references: [id], onDelete: Cascade)
+
+  entries RssFeedEntry[]
+  logs    RssFeedLog[]
+
+  @@index([blogId])
+  @@index([status])
+  @@index([nextSyncAt])
+  @@index([priority])
+  @@index([url])
+  @@map("rss_feeds")
+}
+
+model RssFeedEntry {
+  id            String    @id @default(uuid()) @db.Uuid
+  feedId        String    @map("feed_id") @db.Uuid
+  guid          String    @db.VarChar(255)
+  canonicalUrl  String?   @map("canonical_url") @db.VarChar(2048)
+  normalizedUrl String?   @map("normalized_url") @db.VarChar(2048)
+  urlHash       String    @map("url_hash") @db.VarChar(64)
+  title         String    @db.VarChar(255)
+  excerpt       String?   @db.Text
+  imageUrl      String?   @map("image_url") @db.VarChar(2048)
+  author        String?   @db.VarChar(255)
+  categories    Json?     @db.JsonB
+  language      String?   @db.VarChar(10)
+  publishedAt   DateTime? @map("published_at") @db.Timestamptz
+  discoveredAt  DateTime  @default(now()) @map("discovered_at") @db.Timestamptz
+
+  feed RssFeed @relation(fields: [feedId], references: [id], onDelete: Cascade)
+
+  @@unique([feedId, guid])
+  @@unique([feedId, urlHash])
+  @@index([feedId])
+  @@index([guid])
+  @@index([urlHash])
+  @@index([publishedAt])
+  @@map("rss_feed_entries")
+}
+
+model RssFeedLog {
+  id             String    @id @default(uuid()) @db.Uuid
+  feedId         String    @map("feed_id") @db.Uuid
+  status         String    @db.VarChar(20)
+  requestTime    DateTime? @map("request_time") @db.Timestamptz
+  responseTime   DateTime? @map("response_time") @db.Timestamptz
+  durationMs     Int?      @map("duration_ms")
+  statusCode     Int?      @map("status_code")
+  error          String?   @db.Text
+  importedCount  Int       @default(0) @map("imported_count")
+  skippedCount   Int       @default(0) @map("skipped_count")
+  duplicateCount Int       @default(0) @map("duplicate_count")
+  metadata       Json?     @db.JsonB
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  feed RssFeed @relation(fields: [feedId], references: [id], onDelete: Cascade)
+
+  @@index([feedId])
+  @@index([createdAt])
+  @@map("rss_feed_logs")
+}
+
+model BlogCategory {
+  id         String   @id @default(uuid()) @db.Uuid
+  blogId     String   @map("blog_id") @db.Uuid
+  categoryId String   @map("category_id") @db.Uuid
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  blog     Blog     @relation(fields: [blogId], references: [id], onDelete: Cascade)
+  category Category @relation(fields: [categoryId], references: [id])
+
+  @@unique([blogId, categoryId])
+  @@index([blogId])
+  @@index([categoryId])
+  @@map("blog_categories")
+}
+
+model BlogLanguage {
+  id       String @id @default(uuid()) @db.Uuid
+  blogId   String @map("blog_id") @db.Uuid
+  language String @db.VarChar(10)
+
+  blog Blog @relation(fields: [blogId], references: [id], onDelete: Cascade)
+
+  @@unique([blogId, language])
+  @@index([blogId])
+  @@map("blog_languages")
+}
+
+model SlugHistory {
+  id        String   @id @default(uuid()) @db.Uuid
+  blogId    String   @map("blog_id") @db.Uuid
+  slug      String   @db.VarChar(255)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  blog Blog @relation(fields: [blogId], references: [id], onDelete: Cascade)
+
+  @@index([blogId])
+  @@index([slug])
+  @@map("slug_history")
+}
+
+// ─── Categories ────────────────────────────────────────────
+
+model Category {
+  id          String    @id @default(uuid()) @db.Uuid
+  slug        String    @unique @db.VarChar(255)
+  name        String    @db.VarChar(255)
+  description String?   @db.Text
+  parentId    String?   @map("parent_id") @db.Uuid
+  sortOrder   Int       @default(0) @map("sort_order")
+  isActive    Boolean   @default(true) @map("is_active")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz
+
+  parent            Category?         @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
+  children          Category[]        @relation("CategoryHierarchy")
+  blogLinks         BlogCategory[]
+  articleCategories ArticleCategory[]
+
+  @@index([parentId])
+  @@index([isActive])
+  @@index([deletedAt])
+  @@map("categories")
+}
+
+// ─── Infrastructure ────────────────────────────────────────
+
+model AuditLog {
+  id           String   @id @default(uuid()) @db.Uuid
+  actorId      String?  @map("actor_id") @db.Uuid
+  action       String   @db.VarChar(100)
+  resourceType String   @map("resource_type") @db.VarChar(50)
+  resourceId   String   @map("resource_id") @db.Uuid
+  changeset    Json?    @db.JsonB
+  ipAddress    String?  @map("ip_address") @db.VarChar(45)
+  userAgent    String?  @map("user_agent") @db.Text
+  metadata     Json?    @db.JsonB
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@index([actorId])
+  @@index([action])
+  @@index([resourceType, resourceId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+model ActivityLog {
+  id         String   @id @default(uuid()) @db.Uuid
+  actorId    String?  @map("actor_id") @db.Uuid
+  type       String   @db.VarChar(50)
+  resource   String   @db.VarChar(50)
+  resourceId String?  @map("resource_id") @db.Uuid
+  context    Json?    @db.JsonB
+  metadata   Json?    @db.JsonB
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@index([actorId])
+  @@index([type])
+  @@index([resource, resourceId])
+  @@index([createdAt])
+  @@map("activity_logs")
+}
+
+model FeatureFlag {
+  id          String    @id @default(uuid()) @db.Uuid
+  key         String    @unique @db.VarChar(100)
+  description String?   @db.Text
+  isEnabled   Boolean   @default(false) @map("is_enabled")
+  rules       Json?     @db.JsonB
+  owner       String?   @db.VarChar(100)
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz
+
+  @@index([isEnabled])
+  @@map("feature_flags")
+}
+
+model SystemConfiguration {
+  id          String    @id @default(uuid()) @db.Uuid
+  key         String    @unique @db.VarChar(100)
+  value       Json      @db.JsonB
+  description String?   @db.Text
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz
+
+  @@map("system_configurations")
+}
+
+// ─── Articles ───────────────────────────────────────────────
+
+model Article {
+  id                 String    @id @default(uuid()) @db.Uuid
+  blogId             String    @map("blog_id") @db.Uuid
+  feedEntryId        String?   @map("feed_entry_id") @db.Uuid
+  slug               String    @db.VarChar(255)
+  title              String    @db.VarChar(255)
+  excerpt            String?   @db.Text
+  canonicalUrl       String    @map("canonical_url") @db.VarChar(2048)
+  normalizedUrl      String    @map("normalized_url") @db.VarChar(2048)
+  urlHash            String    @map("url_hash") @db.VarChar(64)
+  featuredImageUrl   String?   @map("featured_image_url") @db.VarChar(2048)
+  author             String?   @db.VarChar(255)
+  language           String    @default("en") @db.VarChar(10)
+  languageConfidence Float?    @map("language_confidence")
+  publishedAt        DateTime? @map("published_at") @db.Timestamptz
+  status             String    @default("draft") @db.VarChar(20)
+  source             String?   @db.VarChar(50)
+  importSource       String?   @map("import_source") @db.VarChar(255)
+  viewCount          Int       @default(0) @map("view_count")
+  clickCount         Int       @default(0) @map("click_count")
+  ctr                Float     @default(0)
+  createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt          DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+  deletedAt          DateTime? @map("deleted_at") @db.Timestamptz
+
+  blog       Blog              @relation(fields: [blogId], references: [id], onDelete: Cascade)
+  categories ArticleCategory[]
+
+  @@unique([blogId, slug])
+  @@index([blogId])
+  @@index([slug])
+  @@index([status])
+  @@index([language])
+  @@index([urlHash])
+  @@index([publishedAt])
+  @@index([canonicalUrl])
+  @@map("articles")
+}
+
+model ArticleCategory {
+  id         String   @id @default(uuid()) @db.Uuid
+  articleId  String   @map("article_id") @db.Uuid
+  categoryId String   @map("category_id") @db.Uuid
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  article  Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  category Category @relation(fields: [categoryId], references: [id])
+
+  @@unique([articleId, categoryId])
+  @@index([articleId])
+  @@index([categoryId])
+  @@map("article_categories")
+}
+
+// ─── Monetization ───────────────────────────────────────────
+
+model Wallet {
+  id               String   @id @default(uuid()) @db.Uuid
+  userId           String   @unique @map("user_id") @db.Uuid
+  purchasedBalance Int      @default(0) @map("purchased_balance")
+  bonusBalance     Int      @default(0) @map("bonus_balance")
+  totalBalance     Int      @default(0) @map("total_balance")
+  version          Int      @default(1)
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt        DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  user         User                @relation(fields: [userId], references: [id])
+  transactions WalletTransaction[]
+
+  @@map("wallets")
+}
+
+model WalletTransaction {
+  id             String   @id @default(uuid()) @db.Uuid
+  walletId       String   @map("wallet_id") @db.Uuid
+  amount         Int
+  type           String   @db.VarChar(20)
+  source         String   @db.VarChar(50)
+  reference      String?  @db.VarChar(255)
+  balanceBefore  Int      @map("balance_before")
+  balanceAfter   Int      @map("balance_after")
+  actorId        String?  @map("actor_id") @db.Uuid
+  reason         String?  @db.Text
+  idempotencyKey String?  @unique @map("idempotency_key") @db.VarChar(255)
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  wallet Wallet @relation(fields: [walletId], references: [id])
+
+  @@index([walletId])
+  @@index([createdAt])
+  @@index([idempotencyKey])
+  @@map("wallet_transactions")
+}
+
+model Plan {
+  id          String    @id @default(uuid()) @db.Uuid
+  name        String    @db.VarChar(100)
+  slug        String    @unique @db.VarChar(100)
+  description String?   @db.Text
+  price       Int       @default(0)
+  currency    String    @default("usd") @db.VarChar(3)
+  visibility  String    @default("public") @db.VarChar(20)
+  limits      Json?     @db.JsonB
+  features    Json?     @db.JsonB
+  status      String    @default("active") @db.VarChar(20)
+  sortOrder   Int       @default(0) @map("sort_order")
+  isFree      Boolean   @default(false) @map("is_free")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz
+
+  payments      Payment[]
+  subscriptions UserSubscription[]
+
+  @@index([slug])
+  @@index([status])
+  @@map("plans")
+}
+
+model Payment {
+  id               String    @id @default(uuid()) @db.Uuid
+  userId           String    @map("user_id") @db.Uuid
+  planId           String?   @map("plan_id") @db.Uuid
+  amount           Int
+  currency         String    @default("usd") @db.VarChar(3)
+  status           String    @default("pending") @db.VarChar(20)
+  stripePaymentId  String?   @unique @map("stripe_payment_id") @db.VarChar(255)
+  stripeSessionId  String?   @map("stripe_session_id") @db.VarChar(255)
+  creditsPurchased Int?      @map("credits_purchased")
+  idempotencyKey   String?   @unique @map("idempotency_key") @db.VarChar(255)
+  rawWebhook       Json?     @map("raw_webhook") @db.JsonB
+  metadata         Json?     @db.JsonB
+  completedAt      DateTime? @map("completed_at") @db.Timestamptz
+  failedAt         DateTime? @map("failed_at") @db.Timestamptz
+  refundedAt       DateTime? @map("refunded_at") @db.Timestamptz
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt        DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  user User  @relation(fields: [userId], references: [id])
+  plan Plan? @relation(fields: [planId], references: [id])
+
+  @@index([userId])
+  @@index([stripePaymentId])
+  @@index([stripeSessionId])
+  @@index([status])
+  @@index([idempotencyKey])
+  @@map("payments")
+}
+
+model StripeWebhookEvent {
+  id            String    @id @default(uuid()) @db.Uuid
+  stripeEventId String    @unique @map("stripe_event_id") @db.VarChar(255)
+  type          String    @db.VarChar(100)
+  payload       Json      @db.JsonB
+  status        String    @default("received") @db.VarChar(20)
+  errorMessage  String?   @map("error_message") @db.Text
+  processedAt   DateTime? @map("processed_at") @db.Timestamptz
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  @@index([stripeEventId])
+  @@index([type])
+  @@index([status])
+  @@map("stripe_webhook_events")
+}
+
+// ─── Founder Programs ───────────────────────────────────────
+
+model FounderProgram {
+  id         String   @id @default(uuid()) @db.Uuid
+  slug       String   @unique @db.VarChar(100)
+  name       String   @db.VarChar(100)
+  price      Int
+  currency   String   @default("usd") @db.VarChar(3)
+  totalSeats Int      @map("total_seats")
+  usedSeats  Int      @default(0) @map("used_seats")
+  status     String   @default("open") @db.VarChar(20)
+  badgeLabel String   @map("badge_label") @db.VarChar(50)
+  benefits   Json?    @db.JsonB
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  seats FounderSeat[]
+
+  @@index([slug])
+  @@index([status])
+  @@map("founder_programs")
+}
+
+model FounderSeat {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @unique @map("user_id") @db.Uuid
+  programId String   @map("program_id") @db.Uuid
+  version   Int      @default(1)
+  claimedAt DateTime @default(now()) @map("claimed_at") @db.Timestamptz
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  user    User           @relation(fields: [userId], references: [id])
+  program FounderProgram @relation(fields: [programId], references: [id])
+
+  @@index([programId])
+  @@index([userId])
+  @@map("founder_seats")
+}
+
+// ─── Subscriptions ──────────────────────────────────────────
+
+model UserSubscription {
+  id                 String    @id @default(uuid()) @db.Uuid
+  userId             String    @map("user_id") @db.Uuid
+  planId             String    @map("plan_id") @db.Uuid
+  status             String    @default("pending") @db.VarChar(20)
+  currentPeriodStart DateTime? @map("current_period_start") @db.Timestamptz
+  currentPeriodEnd   DateTime? @map("current_period_end") @db.Timestamptz
+  renewalDate        DateTime? @map("renewal_date") @db.Timestamptz
+  expirationDate     DateTime? @map("expiration_date") @db.Timestamptz
+  gracePeriodEnd     DateTime? @map("grace_period_end") @db.Timestamptz
+  cancelledAt        DateTime? @map("cancelled_at") @db.Timestamptz
+  lastPaymentId      String?   @map("last_payment_id") @db.Uuid
+  nextBillingDate    DateTime? @map("next_billing_date") @db.Timestamptz
+  metadata           Json?     @db.JsonB
+  createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt          DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  user     User                  @relation(fields: [userId], references: [id])
+  plan     Plan                  @relation(fields: [planId], references: [id])
+  invoices SubscriptionInvoice[]
+
+  @@index([userId])
+  @@index([planId])
+  @@index([status])
+  @@index([nextBillingDate])
+  @@map("user_subscriptions")
+}
+
+model SubscriptionInvoice {
+  id             String    @id @default(uuid()) @db.Uuid
+  subscriptionId String    @map("subscription_id") @db.Uuid
+  amount         Int
+  currency       String    @default("usd") @db.VarChar(3)
+  status         String    @default("pending") @db.VarChar(20)
+  paidAt         DateTime? @map("paid_at") @db.Timestamptz
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  subscription UserSubscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  @@index([subscriptionId])
+  @@map("subscription_invoices")
+}
+
+// ─── Promotions ─────────────────────────────────────────────
+
+model PromotionPackage {
+  id          String    @id @default(uuid()) @db.Uuid
+  name        String    @db.VarChar(100)
+  slug        String    @unique @db.VarChar(100)
+  description String?   @db.Text
+  creditCost  Int       @map("credit_cost")
+  duration    Int       @map("duration")
+  priority    Int       @default(0)
+  status      String    @default("active") @db.VarChar(20)
+  visibility  String    @default("public") @db.VarChar(20)
+  sortOrder   Int       @default(0) @map("sort_order")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz
+
+  campaigns PromotionCampaign[]
+
+  @@index([slug])
+  @@index([status])
+  @@index([visibility])
+  @@map("promotion_packages")
+}
+
+model PromotionCampaign {
+  id            String    @id @default(uuid()) @db.Uuid
+  userId        String    @map("user_id") @db.Uuid
+  packageId     String    @map("package_id") @db.Uuid
+  type          String    @db.VarChar(20)
+  targetId      String?   @map("target_id") @db.Uuid
+  status        String    @default("draft") @db.VarChar(20)
+  creditsSpent  Int       @default(0) @map("credits_spent")
+  creditsBudget Int       @default(0) @map("credits_budget")
+  weight        Float     @default(1.0)
+  startDate     DateTime? @map("start_date") @db.Timestamptz
+  endDate       DateTime? @map("end_date") @db.Timestamptz
+  impressions   Int       @default(0)
+  clicks        Int       @default(0)
+  ctr           Float     @default(0)
+  metadata      Json?     @db.JsonB
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  user      User                 @relation(fields: [userId], references: [id])
+  package   PromotionPackage     @relation(fields: [packageId], references: [id])
+  analytics PromotionAnalytics[]
+
+  @@index([userId])
+  @@index([packageId])
+  @@index([status])
+  @@index([type])
+  @@index([startDate, endDate])
+  @@map("promotion_campaigns")
+}
+
+model PromotionAnalytics {
+  id         String   @id @default(uuid()) @db.Uuid
+  campaignId String   @map("campaign_id") @db.Uuid
+  type       String   @db.VarChar(20)
+  metadata   Json?    @db.JsonB
+  recordedAt DateTime @default(now()) @map("recorded_at") @db.Timestamptz
+
+  campaign PromotionCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@index([campaignId])
+  @@index([type])
+  @@index([recordedAt])
+  @@map("promotion_analytics")
+}
+
+// ─── Badges ─────────────────────────────────────────────────
+
+model Badge {
+  id          String    @id @default(uuid()) @db.Uuid
+  name        String    @db.VarChar(100)
+  slug        String    @unique @db.VarChar(100)
+  description String?   @db.Text
+  svgContent  String?   @map("svg_content") @db.Text
+  type        String    @default("custom") @db.VarChar(20)
+  isActive    Boolean   @default(true) @map("is_active")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz
+
+  userBadges UserBadge[]
+
+  @@index([slug])
+  @@index([type])
+  @@index([isActive])
+  @@map("badges")
+}
+
+model UserBadge {
+  id         String    @id @default(uuid()) @db.Uuid
+  userId     String    @map("user_id") @db.Uuid
+  badgeId    String    @map("badge_id") @db.Uuid
+  isVisible  Boolean   @default(true) @map("is_visible")
+  assignedAt DateTime  @default(now()) @map("assigned_at") @db.Timestamptz
+  revokedAt  DateTime? @map("revoked_at") @db.Timestamptz
+
+  user  User  @relation(fields: [userId], references: [id])
+  badge Badge @relation(fields: [badgeId], references: [id])
+
+  @@unique([userId, badgeId])
+  @@index([userId])
+  @@index([badgeId])
+  @@map("user_badges")
+}
+
+// ─── Notifications ──────────────────────────────────────────
+
+model Notification {
+  id         String    @id @default(uuid()) @db.Uuid
+  userId     String    @map("user_id") @db.Uuid
+  type       String    @db.VarChar(20)
+  title      String    @db.VarChar(255)
+  body       String?   @db.Text
+  data       Json?     @db.JsonB
+  readAt     DateTime? @map("read_at") @db.Timestamptz
+  archivedAt DateTime? @map("archived_at") @db.Timestamptz
+  deletedAt  DateTime? @map("deleted_at") @db.Timestamptz
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([type])
+  @@index([readAt])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+// ─── Support Tickets ────────────────────────────────────────
+
+model SupportTicket {
+  id         String    @id @default(uuid()) @db.Uuid
+  userId     String    @map("user_id") @db.Uuid
+  subject    String    @db.VarChar(255)
+  body       String?   @db.Text
+  status     String    @default("open") @db.VarChar(20)
+  assignedTo String?   @map("assigned_to") @db.Uuid
+  closedAt   DateTime? @map("closed_at") @db.Timestamptz
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt  DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  user    User           @relation(fields: [userId], references: [id])
+  replies SupportReply[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([assignedTo])
+  @@map("support_tickets")
+}
+
+model SupportReply {
+  id        String   @id @default(uuid()) @db.Uuid
+  ticketId  String   @map("ticket_id") @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  body      String   @db.Text
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  ticket SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  user   User          @relation(fields: [userId], references: [id])
+
+  @@index([ticketId])
+  @@map("support_replies")
+}
+
+// ─── Search ─────────────────────────────────────────────────
+
+model SearchAnalytics {
+  id           String   @id @default(uuid()) @db.Uuid
+  query        String   @db.VarChar(500)
+  resultsCount Int      @default(0) @map("results_count")
+  language     String   @default("all") @db.VarChar(10)
+  searchedAt   DateTime @default(now()) @map("searched_at") @db.Timestamptz
+  durationMs   Int      @default(0) @map("duration_ms")
+
+  @@index([searchedAt])
+  @@index([query])
+  @@index([language])
+  @@map("search_analytics")
+}
+
+// ─── Outbox ─────────────────────────────────────────────────
+
+model OutboxEvent {
+  id            String    @id @default(uuid()) @db.Uuid
+  eventId       String    @unique @map("event_id") @db.VarChar(255)
+  eventName     String    @map("event_name") @db.VarChar(100)
+  aggregateId   String    @map("aggregate_id") @db.VarChar(255)
+  aggregateType String    @map("aggregate_type") @db.VarChar(50)
+  payload       Json      @db.JsonB
+  status        String    @default("pending") @db.VarChar(20)
+  retryCount    Int       @default(0) @map("retry_count")
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  processedAt   DateTime? @map("processed_at") @db.Timestamptz
+
+  @@index([status, createdAt])
+  @@map("outbox_events")
+}

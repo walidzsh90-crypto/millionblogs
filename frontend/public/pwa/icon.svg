@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title">
+  <title>MillionBlogs</title>
+  <rect width="512" height="512" rx="96" fill="#1f66c2"/>
+  <path d="M132 144h248v56H132z" fill="#ffffff"/>
+  <path d="M132 228h188v48H132z" fill="#ffffff" opacity=".92"/>
+  <path d="M132 304h248v64H132z" fill="#0f172a" opacity=".2"/>
+  <path d="M156 320h200v16H156zm0 28h148v16H156z" fill="#ffffff"/>
+</svg>

@@ -1,0 +1,8 @@
+{
+  "appName": "MillionBlogs",
+  "loading": "Loading",
+  "error": "Something went wrong",
+  "notFound": "Page not found",
+  "offline": "You are offline",
+  "maintenance": "MillionBlogs is temporarily unavailable"
+}

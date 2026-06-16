@@ -1,0 +1,12 @@
+export { PromotionsModule } from './promotions.module';
+export { PromotionsService } from './promotions.service';
+export { RotationService } from './rotation.service';
+export { PromotionPackagesRepository } from './promotion-packages.repository';
+export { PromotionCampaignsRepository } from './promotion-campaigns.repository';
+export { PromotionsController, AccountPromotionsController, AdminPromotionsController } from './promotions.controller';
+export { CreatePackageDto } from './dto/create-package.dto';
+export { UpdatePackageDto } from './dto/update-package.dto';
+export { PackageResponseDto } from './dto/package-response.dto';
+export { CreateCampaignDto } from './dto/create-campaign.dto';
+export { CampaignResponseDto } from './dto/campaign-response.dto';
+export { CampaignFilterDto } from './dto/campaign-filter.dto';
