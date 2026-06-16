@@ -5,7 +5,6 @@ import { PrismaService } from '../../../src/prisma';
 
 describe('FeatureFlagService', () => {
   let service: FeatureFlagService;
-  let repository: FeatureFlagRepository;
 
   const mockPrisma = {
     featureFlag: {
@@ -26,7 +25,6 @@ describe('FeatureFlagService', () => {
     }).compile();
 
     service = module.get<FeatureFlagService>(FeatureFlagService);
-    repository = module.get<FeatureFlagRepository>(FeatureFlagRepository);
   });
 
   afterEach(() => {

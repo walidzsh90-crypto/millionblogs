@@ -40,7 +40,7 @@ describe('RssValidator', () => {
   </channel>
 </rss>`;
 
-    const result = await validator.validate(xml, 'https://example.com/feed.xml');
+    const result = await validator.validate(xml);
     expect(result.valid).toBe(true);
     expect(result.feedType).toBe('rss');
     expect(result.title).toBe('Test Feed');
@@ -48,13 +48,13 @@ describe('RssValidator', () => {
   });
 
   it('should reject empty XML', async () => {
-    const result = await validator.validate('', 'https://example.com/feed.xml');
+    const result = await validator.validate('');
     expect(result.valid).toBe(false);
     expect(result.errors).toContain('Empty XML content');
   });
 
   it('should reject missing RSS root', async () => {
-    const result = await validator.validate('<html><body></body></html>', 'https://example.com/feed.xml');
+    const result = await validator.validate('<html><body></body></html>');
     expect(result.valid).toBe(false);
     expect(result.errors).toContain('Missing or invalid <rss> root element');
   });
@@ -69,7 +69,7 @@ describe('RssValidator', () => {
   </channel>
 </rss>`;
 
-    const result = await validator.validate(xml, 'https://example.com/feed.xml');
+    const result = await validator.validate(xml);
     expect(result.valid).toBe(true);
     expect(result.warnings.length).toBeGreaterThan(0);
     expect(result.entries).toBe(0);
@@ -112,7 +112,7 @@ describe('AtomValidator', () => {
   </entry>
 </feed>`;
 
-    const result = await validator.validate(xml, 'https://example.com/atom.xml');
+    const result = await validator.validate(xml);
     expect(result.valid).toBe(true);
     expect(result.feedType).toBe('atom');
     expect(result.title).toBe('Test Atom Feed');
@@ -125,7 +125,7 @@ describe('AtomValidator', () => {
   <title>Bad Atom</title>
 </feed>`;
 
-    const result = await validator.validate(xml, 'https://example.com/atom.xml');
+    const result = await validator.validate(xml);
     expect(result.valid).toBe(false);
     expect(result.errors.length).toBeGreaterThan(0);
   });

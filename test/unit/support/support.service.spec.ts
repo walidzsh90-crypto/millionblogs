@@ -18,7 +18,7 @@ describe('SupportService', () => {
     closedAt: null,
     createdAt: new Date(),
     updatedAt: new Date(),
-    user: { id: 'user-1', displayName: 'Test User' },
+    user: { id: 'user-1', displayName: 'Test User', email: 'user@test.com' },
     replies: [],
   };
 
@@ -78,7 +78,7 @@ describe('SupportService', () => {
   describe('addReply', () => {
     it('should add reply to open ticket', async () => {
       repo.findById.mockResolvedValue(mockTicket);
-      repo.addReply.mockResolvedValue({ id: 'reply-1', body: 'Thanks!' });
+      repo.addReply.mockResolvedValue({ id: 'reply-1', body: 'Thanks!', createdAt: new Date(), userId: 'user-1', ticketId: 'ticket-1' });
       repo.update.mockResolvedValue(mockTicket);
 
       const result = await service.addReply('ticket-1', 'user-1', 'Thanks!');

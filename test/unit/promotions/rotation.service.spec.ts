@@ -93,7 +93,7 @@ describe('RotationService', () => {
 
   describe('recordImpression', () => {
     it('should record impression analytics', async () => {
-      repo.recordAnalytics.mockResolvedValue({ id: 'analytics-1' });
+      repo.recordAnalytics.mockResolvedValue({ id: 'analytics-1', type: 'impression', metadata: null as any, recordedAt: new Date(), campaignId: 'c1' } as any);
 
       await service.recordImpression('c1');
       expect(repo.recordAnalytics).toHaveBeenCalledWith('c1', 'impression');
@@ -102,7 +102,7 @@ describe('RotationService', () => {
 
   describe('recordClick', () => {
     it('should record click analytics', async () => {
-      repo.recordAnalytics.mockResolvedValue({ id: 'analytics-1' });
+      repo.recordAnalytics.mockResolvedValue({ id: 'analytics-1', type: 'impression', metadata: null as any, recordedAt: new Date(), campaignId: 'c1' } as any);
 
       await service.recordClick('c1');
       expect(repo.recordAnalytics).toHaveBeenCalledWith('c1', 'click');

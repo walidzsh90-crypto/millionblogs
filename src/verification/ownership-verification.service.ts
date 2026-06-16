@@ -120,7 +120,7 @@ export class OwnershipVerificationService {
     const byMethod = (method: string) => {
       const v = verifications.find((v: any) => v.method === method);
       if (!v) return null;
-      return { status: v.status, verifiedAt: v.verifiedAt };
+      return { status: v.status, verifiedAt: v.verifiedAt ?? undefined } as any;
     };
 
     return {

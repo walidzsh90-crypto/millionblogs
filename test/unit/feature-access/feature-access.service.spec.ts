@@ -70,7 +70,7 @@ describe('FeatureAccessService', () => {
     } as any;
 
     plansRepo = {
-      findAllActive: jest.fn(),
+      findActive: jest.fn(),
     } as any;
 
     const module: TestingModule = await Test.createTestingModule({
@@ -87,9 +87,9 @@ describe('FeatureAccessService', () => {
 
   describe('resolve', () => {
     it('should return founder access for founder user', async () => {
-      founderRepo.getSeatByUserId.mockResolvedValue(mockFounderSeat);
+      founderRepo.getSeatByUserId.mockResolvedValue(mockFounderSeat as any);
       subsRepo.findActiveByUserId.mockResolvedValue(null);
-      plansRepo.findAllActive.mockResolvedValue(mockPlans);
+      plansRepo.findActive.mockResolvedValue(mockPlans as any);
 
       const access = await service.resolve('founder-user');
       expect(access.isFounder).toBe(true);
@@ -99,9 +99,9 @@ describe('FeatureAccessService', () => {
     });
 
     it('should return master founder access', async () => {
-      founderRepo.getSeatByUserId.mockResolvedValue(mockMasterSeat);
+      founderRepo.getSeatByUserId.mockResolvedValue(mockMasterSeat as any);
       subsRepo.findActiveByUserId.mockResolvedValue(null);
-      plansRepo.findAllActive.mockResolvedValue(mockPlans);
+      plansRepo.findActive.mockResolvedValue(mockPlans as any);
 
       const access = await service.resolve('master-user');
       expect(access.isFounder).toBe(true);
@@ -111,8 +111,8 @@ describe('FeatureAccessService', () => {
 
     it('should return subscription access for subscriber', async () => {
       founderRepo.getSeatByUserId.mockResolvedValue(null);
-      subsRepo.findActiveByUserId.mockResolvedValue(mockActiveSub);
-      plansRepo.findAllActive.mockResolvedValue(mockPlans);
+      subsRepo.findActiveByUserId.mockResolvedValue(mockActiveSub as any);
+      plansRepo.findActive.mockResolvedValue(mockPlans as any);
 
       const access = await service.resolve('sub-user');
       expect(access.isFounder).toBe(false);
@@ -124,7 +124,7 @@ describe('FeatureAccessService', () => {
     it('should return free access for free user', async () => {
       founderRepo.getSeatByUserId.mockResolvedValue(null);
       subsRepo.findActiveByUserId.mockResolvedValue(null);
-      plansRepo.findAllActive.mockResolvedValue(mockPlans);
+      plansRepo.findActive.mockResolvedValue(mockPlans as any);
 
       const access = await service.resolve('free-user');
       expect(access.isFounder).toBe(false);
@@ -136,9 +136,9 @@ describe('FeatureAccessService', () => {
 
   describe('hasAccess', () => {
     it('should return true if feature is available', async () => {
-      founderRepo.getSeatByUserId.mockResolvedValue(mockFounderSeat);
+      founderRepo.getSeatByUserId.mockResolvedValue(mockFounderSeat as any);
       subsRepo.findActiveByUserId.mockResolvedValue(null);
-      plansRepo.findAllActive.mockResolvedValue(mockPlans);
+      plansRepo.findActive.mockResolvedValue(mockPlans as any);
 
       const result = await service.hasAccess('founder-user', 'lifetimeAccess');
       expect(result).toBe(true);
@@ -147,7 +147,7 @@ describe('FeatureAccessService', () => {
     it('should return false if feature is not available', async () => {
       founderRepo.getSeatByUserId.mockResolvedValue(null);
       subsRepo.findActiveByUserId.mockResolvedValue(null);
-      plansRepo.findAllActive.mockResolvedValue(mockPlans);
+      plansRepo.findActive.mockResolvedValue(mockPlans as any);
 
       const result = await service.hasAccess('free-user', 'lifetimeAccess');
       expect(result).toBe(false);

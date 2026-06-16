@@ -47,7 +47,7 @@ export class HistoricalDataStrategy extends BaseVerificationStrategy {
     }
 
     // Check history events
-    const suspiciousEvents = await this.prisma.event.count({
+    const suspiciousEvents = await this.prisma.outboxEvent.count({
       where: {
         aggregateId: blogId,
         eventName: { in: ['blog.suspended', 'blog.reported'] },

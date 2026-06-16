@@ -18,7 +18,7 @@ export class PlansRepository {
     isFree?: boolean;
     sortOrder?: number;
   }) {
-    return this.prisma.plan.create({ data });
+    return this.prisma.plan.create({ data: data as any });
   }
 
   async findById(id: string) {

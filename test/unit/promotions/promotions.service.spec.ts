@@ -25,6 +25,7 @@ describe('PromotionsService', () => {
     status: 'active',
     visibility: 'public',
     sortOrder: 0,
+    deletedAt: null,
     createdAt: new Date(),
     updatedAt: new Date(),
   };
@@ -44,6 +45,8 @@ describe('PromotionsService', () => {
     impressions: 0,
     clicks: 0,
     ctr: 0,
+    metadata: null as any,
+    deletedAt: null,
     package: mockPackage,
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -98,8 +101,8 @@ describe('PromotionsService', () => {
   describe('createCampaign', () => {
     it('should create a campaign with credit consumption', async () => {
       packagesRepo.findById.mockResolvedValue(mockPackage);
-      walletService.getBalance.mockResolvedValue({ totalBalance: 500 });
-      walletService.debit.mockResolvedValue({});
+      walletService.getBalance.mockResolvedValue({ purchasedBalance: 0, bonusBalance: 0, totalBalance: 500 });
+      walletService.debit.mockResolvedValue({ id: 'txn-1', amount: 100, balanceAfter: 400 } as any);
       campaignsRepo.create.mockResolvedValue(mockCampaign);
 
       const result = await service.createCampaign('user-1', { packageId: 'pkg-1', type: 'article', creditsBudget: 100 });
@@ -119,7 +122,7 @@ describe('PromotionsService', () => {
 
     it('should reject if insufficient credits', async () => {
       packagesRepo.findById.mockResolvedValue(mockPackage);
-      walletService.getBalance.mockResolvedValue({ totalBalance: 10 });
+      walletService.getBalance.mockResolvedValue({ purchasedBalance: 0, bonusBalance: 0, totalBalance: 10 });
       await expect(service.createCampaign('user-1', { packageId: 'pkg-1', type: 'article' })).rejects.toThrow(BadRequestException);
     });
   });
@@ -142,8 +145,8 @@ describe('PromotionsService', () => {
   describe('credit consumption', () => {
     it('should consume credits atomically', async () => {
       packagesRepo.findById.mockResolvedValue(mockPackage);
-      walletService.getBalance.mockResolvedValue({ totalBalance: 500 });
-      walletService.debit.mockResolvedValue({});
+      walletService.getBalance.mockResolvedValue({ purchasedBalance: 0, bonusBalance: 0, totalBalance: 500 });
+      walletService.debit.mockResolvedValue({ id: 'txn-1', amount: 100, balanceAfter: 400 } as any);
       campaignsRepo.create.mockResolvedValue(mockCampaign);
 
       await service.createCampaign('user-1', { packageId: 'pkg-1', type: 'article' });

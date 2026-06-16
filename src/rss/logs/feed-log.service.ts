@@ -32,7 +32,7 @@ export class FeedLogService {
         importedCount: input.importedCount,
         skippedCount: input.skippedCount,
         duplicateCount: input.duplicateCount,
-        metadata: input.metadata || undefined,
+        metadata: input.metadata as any || undefined,
       },
     });
   }

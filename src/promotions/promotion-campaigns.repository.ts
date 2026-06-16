@@ -17,7 +17,7 @@ export class PromotionCampaignsRepository {
     endDate?: Date;
     metadata?: Record<string, unknown>;
   }) {
-    return this.prisma.promotionCampaign.create({ data });
+    return this.prisma.promotionCampaign.create({ data: data as any });
   }
 
   async findById(id: string) {

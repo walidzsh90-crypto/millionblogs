@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { LoggingService } from '../../../src/common/logging';
-import { ConfigModule } from '../../../src/config';
+import { LoggingService } from '../../../../src/common/logging';
+import { ConfigModule } from '../../../../src/config';
 
 describe('LoggingService', () => {
   let service: LoggingService;

@@ -18,7 +18,7 @@ export class PaymentsRepository {
     idempotencyKey?: string;
     metadata?: Record<string, unknown>;
   }) {
-    return this.prisma.payment.create({ data });
+    return this.prisma.payment.create({ data: data as any });
   }
 
   async findById(id: string) {
@@ -87,7 +87,7 @@ export class PaymentsRepository {
   // Stripe webhook events
   async saveWebhookEvent(stripeEventId: string, type: string, payload: Record<string, unknown>) {
     return this.prisma.stripeWebhookEvent.create({
-      data: { stripeEventId, type, payload },
+      data: { stripeEventId, type, payload: payload as any },
     });
   }
 

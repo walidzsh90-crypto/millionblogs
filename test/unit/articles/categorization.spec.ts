@@ -51,7 +51,7 @@ describe('CategorizationService', () => {
   });
 
   it('should return empty when nothing matches', async () => {
-    jest.spyOn(mockPrisma, 'blogCategory').mockResolvedValueOnce([]);
+    jest.spyOn(mockPrisma.blogCategory, 'findMany').mockResolvedValueOnce([]);
 
     const result = await service.categorize('blog-empty', ['Unknown'], []);
     expect(result.source).toBe('none');

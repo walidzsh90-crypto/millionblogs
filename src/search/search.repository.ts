@@ -191,10 +191,10 @@ export class SearchRepository {
 
     params.push(pageSize, offset);
 
-    const [countResult, items]: [Array<{ total: bigint }>, any[]] = await Promise.all([
+    const [countResult, items] = await Promise.all([
       this.prisma.$queryRawUnsafe(countSql, ...params.slice(0, -2)),
       this.prisma.$queryRawUnsafe(dataSql, ...params),
-    ]);
+    ]) as [Array<{ total: bigint }>, any[]];
 
     const total = Number(countResult[0]?.total || 0);
 

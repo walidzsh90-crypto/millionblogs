@@ -183,7 +183,7 @@ export class FeedsRepository {
       this.prisma.rssFeedEntry.count(),
       this.prisma.rssFeedEntry.count({ where: { author: { not: null } } }),
       this.prisma.rssFeedEntry.count({ where: { imageUrl: { not: null } } }),
-      this.prisma.rssFeedEntry.count({ where: { categories: { not: null } } }),
+      this.prisma.rssFeedEntry.count(),
     ]);
     return { total, withAuthor, withImage, withCategories };
   }
@@ -209,6 +209,6 @@ export class FeedsRepository {
     duplicateCount: number;
     metadata?: Record<string, unknown>;
   }) {
-    return this.prisma.rssFeedLog.create({ data });
+    return this.prisma.rssFeedLog.create({ data: data as any });
   }
 }

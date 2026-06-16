@@ -73,7 +73,7 @@ describe('StructuredDataService', () => {
   });
 
   it('should generate Article schema', () => {
-    const schema = service.generateArticleSchema({
+    const schema: any = service.generateArticleSchema({
       title: 'Test Article',
       excerpt: 'Test excerpt',
       url: 'https://millionblogs.com/article/blog/article',
@@ -94,7 +94,7 @@ describe('StructuredDataService', () => {
   });
 
   it('should generate Blog schema', () => {
-    const schema = service.generateBlogSchema({
+    const schema: any = service.generateBlogSchema({
       name: 'Test Blog',
       description: 'A test blog',
       url: 'https://millionblogs.com/blog/test-blog',
@@ -107,7 +107,7 @@ describe('StructuredDataService', () => {
   });
 
   it('should generate Breadcrumb schema', () => {
-    const schema = service.generateBreadcrumbSchema([
+    const schema: any = service.generateBreadcrumbSchema([
       { name: 'Home', url: 'https://millionblogs.com' },
       { name: 'Blog', url: 'https://millionblogs.com/blog/test' },
       { name: 'Article', url: 'https://millionblogs.com/article/test/article' },
@@ -126,7 +126,7 @@ describe('StructuredDataService', () => {
   });
 
   it('should handle null author as organization', () => {
-    const schema = service.generateArticleSchema({
+    const schema: any = service.generateArticleSchema({
       title: 'Test',
       excerpt: null,
       url: 'https://millionblogs.com/article/b/a',

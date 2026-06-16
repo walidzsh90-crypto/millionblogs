@@ -13,31 +13,31 @@ export class FeatureFlagRepository {
   async findByKey(key: string): Promise<FeatureFlagEntity | null> {
     return this.prisma.featureFlag.findFirst({
       where: { key, deletedAt: null },
-    });
+    }) as any;
   }
 
   async findAll(): Promise<FeatureFlagEntity[]> {
     return this.prisma.featureFlag.findMany({
       where: { deletedAt: null },
       orderBy: { key: 'asc' },
-    });
+    }) as any;
   }
 
   async findEnabled(): Promise<FeatureFlagEntity[]> {
     return this.prisma.featureFlag.findMany({
       where: { isEnabled: true, deletedAt: null },
-    });
+    }) as any;
   }
 
   async create(data: CreateFeatureFlagData): Promise<FeatureFlagEntity> {
-    return this.prisma.featureFlag.create({ data });
+    return this.prisma.featureFlag.create({ data: data as any }) as any;
   }
 
   async update(key: string, data: UpdateFeatureFlagData): Promise<FeatureFlagEntity> {
     return this.prisma.featureFlag.update({
       where: { key },
-      data,
-    });
+      data: data as any,
+    }) as any;
   }
 
   async softDelete(key: string): Promise<void> {

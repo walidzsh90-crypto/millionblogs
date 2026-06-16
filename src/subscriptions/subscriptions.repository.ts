@@ -18,7 +18,7 @@ export class SubscriptionsRepository {
     nextBillingDate?: Date;
     metadata?: Record<string, unknown>;
   }) {
-    return this.prisma.userSubscription.create({ data });
+    return this.prisma.userSubscription.create({ data: data as any });
   }
 
   async findById(id: string) {

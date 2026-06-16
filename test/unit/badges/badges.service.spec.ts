@@ -18,6 +18,7 @@ describe('BadgesService', () => {
     isActive: true,
     createdAt: new Date(),
     updatedAt: new Date(),
+    deletedAt: null,
   };
 
   const mockUserBadge = {
@@ -27,6 +28,7 @@ describe('BadgesService', () => {
     isVisible: true,
     assignedAt: new Date(),
     revokedAt: null,
+    deletedAt: null,
     badge: mockBadge,
   };
 

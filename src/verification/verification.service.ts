@@ -93,6 +93,8 @@ export class VerificationService {
     await this.prisma.blogVerification.create({
       data: {
         blogId,
+        method: 'quality_assessment',
+        token: `qa_${uuidv4()}`,
         status: passed ? 'approved' : 'rejected',
         score: Math.round(overallScore * 100),
         strategies: JSON.parse(JSON.stringify(strategyResults)),
@@ -167,7 +169,7 @@ export class VerificationService {
     strategyResults: Array<{ name: string; score: number; details: Record<string, unknown> }>,
   ) {
     const eventName = passed ? EventName.BLOG_VERIFIED : EventName.BLOG_REJECTED;
-    await this.prisma.event.create({
+    await this.prisma.outboxEvent.create({
       data: {
         eventId: uuidv4(),
         eventName,
@@ -182,7 +184,6 @@ export class VerificationService {
             score: r.score,
           })),
         },
-        occurredAt: new Date(),
       },
     });
   }

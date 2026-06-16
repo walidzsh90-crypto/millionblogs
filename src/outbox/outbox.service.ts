@@ -46,7 +46,7 @@ export class OutboxService {
     let processed = 0;
     for (const event of events) {
       try {
-        await publisher.emitFromOutbox(event);
+        await publisher.emitFromOutbox(event as any);
         await this.prisma.outboxEvent.update({
           where: { id: event.id },
           data: { status: 'processed', processedAt: new Date() },

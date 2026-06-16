@@ -17,6 +17,7 @@ describe('NotificationsService', () => {
     data: null,
     readAt: null,
     archivedAt: null,
+    deletedAt: null,
     createdAt: new Date(),
   };
 
